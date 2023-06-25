@@ -1,5 +1,3 @@
 -module(dht_node).
+-include("dht_node.hrl").
 -author("andreadeluna").
-
-%% API
--export([]).

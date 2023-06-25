@@ -1,5 +1,3 @@
 -module(dht_datastore).
+-include("dht_datastore.hrl").
 -author("andreadeluna").
-
-%% API
--export([]).

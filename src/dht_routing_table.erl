@@ -1,5 +1,3 @@
 -module(dht_routing_table).
+-include("dht_routing_table.hrl").
 -author("andreadeluna").
-
-%% API
--export([]).
