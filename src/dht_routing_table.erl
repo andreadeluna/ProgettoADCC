@@ -42,3 +42,20 @@ replace_node(Bucket, NodeInfo) ->
           dict:store(NodeInfo#node_info.id, NodeInfo, Bucket)
       end
   end.
+
+find_smallest_id(Bucket) ->
+  Keys = lists:map(fun({Key, _}) -> Key end, dict:to_list(Bucket)),
+  lists:min(Keys).
+
+get_node_info(Table) ->
+  {Table#dht_routing_table.node_id, self(), get_udp_port()}.
+
+get_node_info_by_id(Table, NodeId) ->
+  BucketIndex = get_bucket_index(Table, NodeId),
+  Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
+  case dict:find(NodeId, Bucket) of
+    {ok, NodeInfo} ->
+      {NodeInfo#node_info.ip, NodeInfo#node_info.port};
+    error ->
+      {get_own_ip(), get_udp_port()}
+  end.
