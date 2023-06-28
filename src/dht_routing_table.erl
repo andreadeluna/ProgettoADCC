@@ -1,7 +1,7 @@
 -module(dht_routing_table).
 -include("dht_routing_table.hrl").
 
--export([init/1]).
+-export([init/1, remove_node/2, get_node_info/1, get_node_info_by_id/2, get_all_nodes/1, find_node/2, find_closest_nodes/2, add_node/2, get_own_ip/0, get_udp_port/0]).
 
 -define(BUCKET_SIZE, 20).
 
@@ -89,3 +89,9 @@ replace_element(1, NewElement, [_|T], Acc) ->
   lists:reverse([NewElement|T] ++ Acc);
 replace_element(Index, NewElement, [H|T], Acc) ->
   replace_element(Index - 1, NewElement, T, [H|Acc]).
+
+get_udp_port() ->
+  {12345}.
+
+get_own_ip() ->
+  {127,0,0,1}.
