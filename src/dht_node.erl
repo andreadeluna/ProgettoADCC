@@ -141,3 +141,29 @@ handle_message(Node, {find_value, Key}) ->
 handle_message(Node, {pong, TargetId}) ->
   update_active_node(Node, TargetId),
   ok.
+
+print_node(Node) ->
+  io:format("Node Info: ~p~n", [dht_routing_table:get_node_info(Node#node.routing_table)]),
+  io:format("Routing Table: ~p~n", [dht_routing_table:get_all_nodes(Node#node.routing_table)]),
+  io:format("Datastore: ~p~n", [Node#node.datastore]).
+
+ping(Node, TargetId) ->
+  Message = {ping, Node},
+  send_message(Node, {ping, Node#node.node_id}, TargetId),
+  receive
+    {pong, {TargetId}} ->
+      % Risposta ricevuta con successo
+      update_active_node(Node, TargetId),
+      ok
+  after ?PING_TIMEOUT ->
+    % Timeout scaduto
+    {error, timeout}
+  end.
+
+stop(Node) ->
+  {_, Socket} = Node#node.socket,
+  gen_udp:close(Socket),
+  NewRoutingTable = dht_routing_table:remove_node(Node#node.node_id, Node#node.routing_table),
+  NewDatastore = dht_datastore:init(),
+  NewNode = Node#node{socket = undefined, routing_table = NewRoutingTable, datastore = NewDatastore},
+  NewNode.
