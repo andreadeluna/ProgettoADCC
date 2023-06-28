@@ -59,3 +59,20 @@ get_node_info_by_id(Table, NodeId) ->
     error ->
       {get_own_ip(), get_udp_port()}
   end.
+
+find_node(Table, TargetId) ->
+  BucketIndex = get_bucket_index(Table, TargetId),
+  Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
+  Nodes = dict:to_list(Bucket),
+  lists:sort(fun({_, Node1}, {_, Node2}) -> dht_utils:distance(TargetId, Node1#node_info.id) < dht_utils:distance(TargetId, Node2#node_info.id) end, Nodes).
+
+find_closest_nodes(Table, TargetId) ->
+  AllNodes = get_all_nodes(Table),
+  SortedNodes = lists:sort(fun(Node1, Node2) -> dht_utils:distance(TargetId, Node1#node_info.id) < dht_utils:distance(TargetId, Node2#node_info.id) end, AllNodes),
+  lists:sublist(SortedNodes, 1, 3).
+
+get_bucket_index(Table, Id) ->
+  Distance = dht_utils:distance(Table#dht_routing_table.node_id, Id),
+  BucketSize = 20,
+  Index = 160 - trunc(math:log2(Distance + 1)),
+  Index div BucketSize + 1.
