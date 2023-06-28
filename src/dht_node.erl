@@ -114,3 +114,30 @@ listen(Node) ->
       handle_message(Node, Message)
   end,
   listen(Node).
+
+handle_message(Node, {ping, SenderId}) ->
+  Reply = {pong, Node},
+  send_message(Node, SenderId, Reply);
+
+handle_message(Node, {store, Key, Value}) ->
+  dht_datastore:store(Node, Key, Value);
+
+handle_message(Node, {find_node, TargetId}) ->
+  Nodes = dht_routing_table:find_closest_nodes(Node, TargetId),
+  Reply = {node_reply, Nodes},
+  send_message(Node, TargetId, Reply);
+
+handle_message(Node, {find_value, Key}) ->
+  case dht_datastore:lookup(Node, Key) of
+    {ok, Value} ->
+      Reply = {value_reply, Key, Value},
+      send_message(Node, Key, Reply);
+    error ->
+      Nodes = dht_routing_table:find_closest_nodes(Node, Key),
+      Reply = {node_reply, Nodes},
+      send_message(Node, Key, Reply)
+  end;
+
+handle_message(Node, {pong, TargetId}) ->
+  update_active_node(Node, TargetId),
+  ok.
