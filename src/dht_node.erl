@@ -94,3 +94,23 @@ handle_inactive_node(Node, _) ->
 update_active_node(Node, NodeId) ->
   ActiveNodes = [{NodeId, erlang:system_time(millisecond)}],
   Node#node{active_nodes = ActiveNodes}.
+
+send_message(Node, Message, TargetId) ->
+  {_, _, NodePort} = dht_routing_table:get_node_info(Node#node.routing_table),
+  TargetNodeInfo = dht_routing_table:get_node_info_by_id(Node#node.routing_table, TargetId#node.node_id),
+  {_, Socket} = Node#node.socket,
+  case TargetNodeInfo of
+    {TargetIp, _} ->
+      gen_udp:send(Socket, TargetIp, NodePort, term_to_binary(Message)),
+      ok;
+    _ ->
+      io:format("Nodo non trovato") % Gestisci l'errore di nodo di destinazione non trovato come desiderato
+  end.
+
+listen(Node) ->
+  receive
+    {udp, _, _, _, BinMsg} ->
+      Message = binary_to_term(BinMsg),
+      handle_message(Node, Message)
+  end,
+  listen(Node).
