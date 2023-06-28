@@ -7,6 +7,7 @@ init() ->
   #dht_datastore{data = dict:new()}.
 
 store(Datastore, Key, Value) ->
+  io:format("Datastore: ~p~n", [Datastore]),
   UpdatedData = dict:store(Key, Value, Datastore#dht_datastore.data),
   #dht_datastore{data = UpdatedData}.
 

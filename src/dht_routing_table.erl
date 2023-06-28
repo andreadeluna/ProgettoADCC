@@ -10,10 +10,13 @@ init(NodeId) ->
   #dht_routing_table{node_id = NodeId, buckets = Buckets}.
 
 add_node(#dht_routing_table{node_id = NodeId, buckets = Buckets} = Table, NodeInfo) ->
+  io:format("Table Info Id: ~p~n", [Table#dht_routing_table.node_id]),
+  io:format("Node Info Id: ~p~n", [NodeInfo#node_info.id]),
   BucketIndex = get_bucket_index(Table, NodeId),
   Bucket = lists:nth(BucketIndex, Buckets),
   UpdatedBucket = replace_node(Bucket, NodeInfo),
   UpdatedBuckets = replace_element(BucketIndex, UpdatedBucket, Buckets),
+  io:format("UpdatedBuckets: ~p~n", [Table#dht_routing_table.buckets]),
   Table#dht_routing_table{buckets = UpdatedBuckets}.
 
 remove_node(NodeId, RoutingTable) ->
@@ -48,13 +51,17 @@ find_smallest_id(Bucket) ->
   lists:min(Keys).
 
 get_node_info(Table) ->
+  io:format("Table Info: ~p~n", [Table]),
   {Table#dht_routing_table.node_id, self(), get_udp_port()}.
 
 get_node_info_by_id(Table, NodeId) ->
   BucketIndex = get_bucket_index(Table, NodeId),
   Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
+  io:format("Bucket Info: ~p~n", [Bucket]),
+  io:format("Table Info: ~p~n", [Table]),
   case dict:find(NodeId, Bucket) of
     {ok, NodeInfo} ->
+      io:format("NodeInfoOK: ~p~n", [NodeInfo]),
       {NodeInfo#node_info.ip, NodeInfo#node_info.port};
     error ->
       {get_own_ip(), get_udp_port()}
@@ -90,8 +97,10 @@ replace_element(1, NewElement, [_|T], Acc) ->
 replace_element(Index, NewElement, [H|T], Acc) ->
   replace_element(Index - 1, NewElement, T, [H|Acc]).
 
+
 get_udp_port() ->
   {12345}.
 
 get_own_ip() ->
   {127,0,0,1}.
+

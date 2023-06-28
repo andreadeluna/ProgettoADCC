@@ -1,5 +1,8 @@
 -module(dht_node).
 -include("dht_node.hrl").
+-import(dht_routing_table, [get_own_ip/0, get_udp_port/0]).
+
+-export([start/1, join_network/2, stop/1, ping/2, store/3, find_node/2, find_value/2, send_message/3, handle_message/2, lookup_node/2, print_node/1]).
 
 -define(PING_TIMEOUT, 15000). % Timeout per il messaggio PING (in millisecondi)
 -define(NODE_TIMEOUT, 10000). % Timeout per il nodo inattivo (in millisecondi)
@@ -9,15 +12,25 @@ start(NodeId) ->
   Datastore = dht_datastore:init(),
   Socket = gen_udp:open(0, [{active, true}]),
   Node = #node{node_id = NodeId, routing_table = RoutingTable, datastore = Datastore, socket = Socket, active_nodes = []},
+  io:format("NodeId: ~p~n", [NodeId]),
+  io:format("RoutingTable: ~p~n", [RoutingTable]),
+  io:format("Datastore: ~p~n", [Datastore]),
+  io:format("Socket: ~p~n", [Socket]),
+  io:format("Node: ~p~n", [Node]),
+  print_node(Node),
   NodeInfo = #node_info{id = NodeId, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
+  io:format("Node Info Add: ~p~n", [NodeInfo]),
   UpdatedRoutingTable = dht_routing_table:add_node(RoutingTable, NodeInfo),
   UpdatedNode = Node#node{routing_table = UpdatedRoutingTable},
+  io:format("UpdatedNode: ~p~n", [UpdatedNode]),
   spawn(fun() -> listen(UpdatedNode) end),
   UpdatedNode.
 
 join_network(NewNode, ExistingNode) ->
   ExistingNodeInfo = #node_info{id = ExistingNode#node.node_id, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
   NewNodeInfo = #node_info{id = NewNode#node.node_id, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
+  io:format("ExistingNodeInfo: ~p~n", [ExistingNode]),
+  io:format("NewNodeInfo: ~p~n", [NewNodeInfo]),
   ExistingNodeUpdated = ExistingNode#node{
     node_id = ExistingNode#node.node_id,
     routing_table = dht_routing_table:add_node(ExistingNode#node.routing_table, NewNodeInfo),
@@ -74,6 +87,7 @@ find_value(Node, Key) ->
   end.
 
 store(Node, Key, Value) ->
+  io:format("Datastore Node: ~p~n", [Node#node.datastore]),
   NewDatastore = dht_datastore:store(Node#node.datastore, Key, Value),
   NewNode = Node#node{
     node_id = Node#node.node_id,
@@ -99,9 +113,14 @@ send_message(Node, Message, TargetId) ->
   {_, _, NodePort} = dht_routing_table:get_node_info(Node#node.routing_table),
   TargetNodeInfo = dht_routing_table:get_node_info_by_id(Node#node.routing_table, TargetId#node.node_id),
   {_, Socket} = Node#node.socket,
+  io:format("Socket message: ~p~n", [Socket]),
+  io:format("TargetNodeInfo: ~p~n", [TargetNodeInfo]),
   case TargetNodeInfo of
     {TargetIp, _} ->
+      io:format("Port: ~p~n", [NodePort]),
       gen_udp:send(Socket, TargetIp, NodePort, term_to_binary(Message)),
+      io:format("Nodo trovato\n"),
+      io:format("Received message from ~p: ~p~n", [Node#node.node_id, Message]),
       ok;
     _ ->
       io:format("Nodo non trovato") % Gestisci l'errore di nodo di destinazione non trovato come desiderato
@@ -148,7 +167,10 @@ print_node(Node) ->
   io:format("Datastore: ~p~n", [Node#node.datastore]).
 
 ping(Node, TargetId) ->
+  io:format("Node: ~p~n", [Node]),
+  io:format("TargetId: ~p~n", [TargetId]),
   Message = {ping, Node},
+  io:format("Message: ~p~n", [Message]),
   send_message(Node, {ping, Node#node.node_id}, TargetId),
   receive
     {pong, {TargetId}} ->
