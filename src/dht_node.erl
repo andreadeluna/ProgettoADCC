@@ -56,3 +56,30 @@ lookup_node_recursive(Node, NodeInfo) ->
           lookup_node_recursive(Node, NextNode)
       end
   end.
+
+find_node(Node, TargetId) ->
+  Nodes = dht_routing_table:find_closest_nodes(Node#node.routing_table, TargetId),
+  Reply = {node_reply, Nodes},
+  send_message(Node, Reply, TargetId).
+
+find_value(Node, Key) ->
+  case dht_datastore:lookup(Node, Key) of
+    {ok, Value} ->
+      Reply = {value_reply, Key, Value},
+      send_message(Node, Key, Reply);
+    error ->
+      Nodes = dht_routing_table:find_closest_nodes(Node, Key),
+      Reply = {node_reply, Nodes},
+      send_message(Node, Key, Reply)
+  end.
+
+store(Node, Key, Value) ->
+  NewDatastore = dht_datastore:store(Node#node.datastore, Key, Value),
+  NewNode = Node#node{
+    node_id = Node#node.node_id,
+    routing_table = Node#node.routing_table,
+    datastore = NewDatastore,
+    socket = Node#node.socket,
+    active_nodes = Node#node.active_nodes
+  },
+  NewNode.
