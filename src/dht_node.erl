@@ -83,3 +83,14 @@ store(Node, Key, Value) ->
     active_nodes = Node#node.active_nodes
   },
   NewNode.
+
+handle_active_node(Node, NodeInfo) ->
+  ActiveNodes = [{NodeInfo, erlang:system_time(millisecond)}],
+  Node#node{active_nodes = ActiveNodes}.
+
+handle_inactive_node(Node, _) ->
+  Node#node{active_nodes = []}.
+
+update_active_node(Node, NodeId) ->
+  ActiveNodes = [{NodeId, erlang:system_time(millisecond)}],
+  Node#node{active_nodes = ActiveNodes}.
