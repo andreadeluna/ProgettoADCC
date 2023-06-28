@@ -76,3 +76,16 @@ get_bucket_index(Table, Id) ->
   BucketSize = 20,
   Index = 160 - trunc(math:log2(Distance + 1)),
   Index div BucketSize + 1.
+
+get_all_nodes(Table) ->
+  lists:flatten([dict:to_list(Bucket) || Bucket <- Table#dht_routing_table.buckets]).
+
+replace_element(Index, NewElement, List) ->
+  replace_element(Index, NewElement, List, []).
+
+replace_element(_, _, [], Acc) ->
+  lists:reverse(Acc);
+replace_element(1, NewElement, [_|T], Acc) ->
+  lists:reverse([NewElement|T] ++ Acc);
+replace_element(Index, NewElement, [H|T], Acc) ->
+  replace_element(Index - 1, NewElement, T, [H|Acc]).
