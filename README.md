@@ -51,3 +51,15 @@ Con esso è possibile implementare un sistema Kademlia in quanto fornisce gli st
 Con Erlang, è possibile creare nodi che comunicano tra loro utilizzando il modello di scambio di messaggi asincrono. Questo è un aspetto cruciale per il funzionamento di un sistema Kademlia, in cui i nodi si scambiano informazioni e richieste di routing.
 Inoltre, Erlang offre meccanismi di gestione degli errori e tolleranza ai guasti che sono essenziali per garantire la resilienza e la stabilità di un sistema distribuito. Questi meccanismi consentono di gestire disconnessioni di nodi, errori di rete e altre situazioni impreviste che possono verificarsi in un ambiente distribuito.
 Complessivamente, grazie alle sue caratteristiche di concorrenza, scalabilità e tolleranza ai guasti, Erlang è una scelta appropriata per implementare un sistema Kademlia o qualsiasi altro sistema distribuito simile.
+
+### dht_datastore.hrl
+File di intestazione (header file) utilizzato per definire il record di dati chiamato "dht_datastore". 
+Un record in Erlang è una struttura dati che può contenere campi con valori associati.
+
+Nel file dht_datastore.hrl, il record "dht_datastore" viene definito con un singolo campo chiamato "data". Questo record viene utilizzato nel modulo dht_datastore.erl per rappresentare lo stato del datastore distribuito utilizzato nel sistema DHT (Distributed Hash Table).
+
+Il campo "data" nel record dht_datastore rappresenta il contenuto effettivo del datastore, che viene implementato come un dizionario Erlang. 
+I dati nel dizionario sono memorizzati utilizzando una chiave (Key) associata a un valore (Value). 
+Il modulo dht_datastore.erl utilizza le funzioni del modulo dict per gestire l'aggiunta, la ricerca e l'accesso ai dati nel datastore.
+
+In sintesi, il file dht_datastore.hrl definisce la struttura dei dati del datastore utilizzato e viene incluso nel modulo dht_datastore.erl per consentire l'utilizzo del record "dht_datastore" e del campo "data" all'interno del codice.
