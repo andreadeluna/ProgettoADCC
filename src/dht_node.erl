@@ -188,9 +188,12 @@ handle_message(Node, {pong, TargetId}) ->
   ok.
 
 print_node(Node) ->
+  io:format("Node ID: ~p~n", [Node#node.node_id]),
   io:format("Node Info: ~p~n", [dht_routing_table:get_node_info(Node#node.routing_table)]),
   io:format("Routing Table: ~p~n", [dht_routing_table:get_all_nodes(Node#node.routing_table)]),
-  io:format("Datastore: ~p~n", [Node#node.datastore]).
+  io:format("Node Socket: ~p~n", [Node#node.socket]),
+  io:format("Datastore: ~p~n", [Node#node.datastore]),
+  io:format("Active nodes: ~p~n", [Node#node.active_nodes]).
 
 ping(Node, TargetId) ->
   io:format("Node: ~p~n", [Node]),
