@@ -50,10 +50,12 @@ join_network(NewNode, ExistingNode) ->
   {ExistingNodeUpdated, NewNodeUpdated}.
 
 lookup_node(Node, TargetId) ->
-  case dht_routing_table:find_node(Node, TargetId) of
+  case dht_routing_table:find_node(Node#node.routing_table, TargetId) of
     [] ->
+      io:format("Nodo non trovato"),
       {error, not_found};
     [NodeInfo|_] ->
+      io:format("Nodo trovato"),
       lookup_node_recursive(Node, NodeInfo)
   end.
 
