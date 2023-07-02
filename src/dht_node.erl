@@ -159,8 +159,10 @@ listen(Node) ->
   listen(Node).
 
 handle_message(Node, {ping, SenderId}) ->
-  Reply = {pong, Node},
-  send_message(Node, SenderId, Reply);
+  Reply = {pong, {Node#node.node_id}},
+  %% send_message(Node, Reply, SenderId),
+  update_active_node(Node, SenderId),
+  Reply;
 
 handle_message(Node, {store, Key, Value}) ->
   dht_datastore:store(Node, Key, Value);
@@ -168,17 +170,17 @@ handle_message(Node, {store, Key, Value}) ->
 handle_message(Node, {find_node, TargetId}) ->
   Nodes = dht_routing_table:find_closest_nodes(Node, TargetId),
   Reply = {node_reply, Nodes},
-  send_message(Node, TargetId, Reply);
+  send_message(Node, Reply, TargetId);
 
 handle_message(Node, {find_value, Key}) ->
   case dht_datastore:lookup(Node, Key) of
     {ok, Value} ->
       Reply = {value_reply, Key, Value},
-      send_message(Node, Key, Reply);
+      send_message(Node, Reply, Key);
     error ->
       Nodes = dht_routing_table:find_closest_nodes(Node, Key),
       Reply = {node_reply, Nodes},
-      send_message(Node, Key, Reply)
+      send_message(Node, Reply, Key)
   end;
 
 handle_message(Node, {pong, TargetId}) ->
