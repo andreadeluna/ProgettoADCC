@@ -60,13 +60,15 @@ lookup_node(Node, TargetId) ->
   end.
 
 lookup_node_recursive(Node, NodeInfo) ->
-  case ping(Node, NodeInfo) of
+  {_, NodeInfoID} = NodeInfo,
+  io:format("NodeInfo Rec: ~p~n", [NodeInfoID#node_info.id]),
+  case ping(Node, NodeInfoID#node_info.id) of
     ok ->
       handle_active_node(Node, NodeInfo),
       {ok, NodeInfo};
     {error, timeout} ->
       handle_inactive_node(Node, NodeInfo),
-      case dht_routing_table:find_closest_nodes(Node, NodeInfo) of
+      case dht_routing_table:find_closest_nodes(Node#node.routing_table, NodeInfoID) of
         [] ->
           {error, not_found};
         [NextNode|_] ->
