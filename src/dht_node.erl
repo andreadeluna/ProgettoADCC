@@ -197,18 +197,21 @@ print_node(Node) ->
 
 ping(Node, TargetId) ->
   io:format("Node: ~p~n", [Node]),
-  io:format("TargetId: ~p~n", [TargetId]),
-  Message = {ping, Node},
+  Message = {ping, Node#node.node_id},
   io:format("Message: ~p~n", [Message]),
-  send_message(Node, {ping, Node#node.node_id}, TargetId),
-  receive
-    {pong, {TargetId}} ->
+  PongMessage = send_message(Node, Message, TargetId),
+  io:format("PongMessage: ~p~n", [PongMessage]),
+  case PongMessage of
+    {ok, {pong, {TargetId}}} ->
+      io:format("Message PING~n"),
       % Risposta ricevuta con successo
       update_active_node(Node, TargetId),
-      ok
-  after ?PING_TIMEOUT ->
-    % Timeout scaduto
-    {error, timeout}
+      io:format("UpdatedNode: ~p~n", [Node]),
+      ok;
+    {ok, _} ->
+      {error, timeout};
+    {error, Reason} ->
+      {error, Reason}
   end.
 
 stop(Node) ->
