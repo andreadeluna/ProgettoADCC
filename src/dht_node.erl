@@ -2,29 +2,38 @@
 -include("dht_node.hrl").
 -import(dht_routing_table, [get_own_ip/0, get_udp_port/0]).
 
--export([start/1, join_network/2, stop/1, ping/2, store/3, find_node/2, find_value/2, send_message/3, handle_message/2, lookup_node/2, print_node/1]).
+-export([start/0, join_network/2, stop/1, ping/2, store/3, find_node/2, find_value/2, send_message/3, handle_message/2, lookup_node/2, print_node/1]).
 
--define(PING_TIMEOUT, 15000). % Timeout per il messaggio PING (in millisecondi)
--define(NODE_TIMEOUT, 10000). % Timeout per il nodo inattivo (in millisecondi)
-
-start(NodeId) ->
-  RoutingTable = dht_routing_table:init(NodeId),
+start() ->
+  Id = generate_random_id(),
+  io:format("RandomId: ~p~n", [Id]),
+  HashedId = hash_id(Id),
+  RoutingTable = dht_routing_table:init(HashedId),
   Datastore = dht_datastore:init(),
   Socket = gen_udp:open(0, [{active, true}]),
-  Node = #node{node_id = NodeId, routing_table = RoutingTable, datastore = Datastore, socket = Socket, active_nodes = []},
-  io:format("NodeId: ~p~n", [NodeId]),
+  Node = #node{node_id = HashedId, routing_table = RoutingTable, datastore = Datastore, socket = Socket, active_nodes = []},
+  io:format("NodeId: ~p~n", [HashedId]),
   io:format("RoutingTable: ~p~n", [RoutingTable]),
   io:format("Datastore: ~p~n", [Datastore]),
   io:format("Socket: ~p~n", [Socket]),
   io:format("Node: ~p~n", [Node]),
   print_node(Node),
-  NodeInfo = #node_info{id = NodeId, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
+  NodeInfo = #node_info{id = HashedId, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
   io:format("Node Info Add: ~p~n", [NodeInfo]),
   UpdatedRoutingTable = dht_routing_table:add_node(RoutingTable, NodeInfo),
   UpdatedNode = Node#node{routing_table = UpdatedRoutingTable},
   io:format("UpdatedNode: ~p~n", [UpdatedNode]),
   spawn(fun() -> listen(UpdatedNode) end),
   UpdatedNode.
+
+generate_random_id() ->
+  Bytes = crypto:strong_rand_bytes(8),
+  io:format("Bytes: ~p~n", [Bytes]),
+  Bytes.
+
+hash_id(Id) ->
+  Hash = crypto:hash(sha, Id),
+  erlang:phash2(Hash).
 
 join_network(NewNode, ExistingNode) ->
   ExistingNodeInfo = #node_info{id = ExistingNode#node.node_id, ip = dht_routing_table:get_own_ip(), port = dht_routing_table:get_udp_port()},
