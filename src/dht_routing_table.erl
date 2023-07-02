@@ -70,6 +70,8 @@ get_node_info_by_id(Table, NodeId) ->
   end.
 
 find_node(Table, TargetId) ->
+  io:format("Table ID: ~p~n", [Table#dht_routing_table.node_id]),
+  io:format("TargetID ID: ~p~n", [TargetId]),
   BucketIndex = get_bucket_index(Table, TargetId),
   Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
   Nodes = dict:to_list(Bucket),
@@ -77,7 +79,13 @@ find_node(Table, TargetId) ->
 
 find_closest_nodes(Table, TargetId) ->
   AllNodes = get_all_nodes(Table),
-  SortedNodes = lists:sort(fun(Node1, Node2) -> dht_utils:distance(TargetId, Node1#node_info.id) < dht_utils:distance(TargetId, Node2#node_info.id) end, AllNodes),
+  io:format("All nodes: ~p~n", [AllNodes]),
+  io:format("Table All nodes: ~p~n", [Table]),
+  io:format("Target All nodes: ~p~n", [TargetId]),
+  SortedNodes = lists:sort(fun({_, Node1}, {_, Node2}) ->
+    io:format("Node1: ~p~n", [Node1]),
+    io:format("Node2: ~p~n", [Node2]),
+    dht_utils:distance(TargetId, Node1#node_info.id) < dht_utils:distance(TargetId, Node2#node_info.id) end, AllNodes),
   lists:sublist(SortedNodes, 1, 3).
 
 get_bucket_index(Table, Id) ->
