@@ -1,19 +1,24 @@
 -module(dht_datastore).
 -include("dht_datastore.hrl").
 
--export([init/0, store/3, lookup/2]).
+-export([
+  init/0,
+  store/3,
+  lookup/2
+]).
 
 init() ->
-  #dht_datastore{data = dict:new()}.
+  #dht_datastore{
+    data = dict:new()
+  }.
 
 store(Datastore, Key, Value) ->
-  io:format("Datastore: ~p~n", [Datastore]),
   UpdatedData = dict:store(Key, Value, Datastore#dht_datastore.data),
-  #dht_datastore{data = UpdatedData}.
+  #dht_datastore{
+    data = UpdatedData
+  }.
 
 lookup(Datastore, Key) ->
-  io:format("Datastore: ~p~n", [Datastore]),
-  io:format("Key: ~p~n", [Key]),
   case dict:find(Key, Datastore#dht_datastore.data) of
     {ok, Value} ->
       {ok, Value};

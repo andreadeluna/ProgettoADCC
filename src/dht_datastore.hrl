@@ -1,1 +1,3 @@
--record(dht_datastore, {data}).
+-record(dht_datastore,
+{data}
+).
