@@ -12,6 +12,8 @@ store(Datastore, Key, Value) ->
   #dht_datastore{data = UpdatedData}.
 
 lookup(Datastore, Key) ->
+  io:format("Datastore: ~p~n", [Datastore]),
+  io:format("Key: ~p~n", [Key]),
   case dict:find(Key, Datastore#dht_datastore.data) of
     {ok, Value} ->
       {ok, Value};

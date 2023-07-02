@@ -110,6 +110,7 @@ replace_element(1, NewElement, [_|T], Acc) ->
 replace_element(Index, NewElement, [H|T], Acc) ->
   replace_element(Index - 1, NewElement, T, [H|Acc]).
 
+
 get_udp_port() ->
   {ok, Socket} = gen_udp:open(0, []),
   {ok, Port} = inet:sockname(Socket),
