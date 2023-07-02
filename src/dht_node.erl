@@ -36,15 +36,17 @@ join_network(NewNode, ExistingNode) ->
     routing_table = dht_routing_table:add_node(ExistingNode#node.routing_table, NewNodeInfo),
     datastore = ExistingNode#node.datastore,
     socket = ExistingNode#node.socket,
-    active_nodes = ExistingNode#node.active_nodes
+    active_nodes = [NewNodeInfo | ExistingNode#node.active_nodes]
   },
+  io:format("ExistingNodeUpdated: ~p~n", [ExistingNodeUpdated]),
   NewNodeUpdated = NewNode#node{
     node_id = NewNode#node.node_id,
     routing_table = dht_routing_table:add_node(NewNode#node.routing_table, ExistingNodeInfo),
     datastore = NewNode#node.datastore,
     socket = NewNode#node.socket,
-    active_nodes = NewNode#node.active_nodes
+    active_nodes = [ExistingNodeInfo | NewNode#node.active_nodes]
   },
+  io:format("NewNodeUpdated: ~p~n", [NewNodeUpdated]),
   {ExistingNodeUpdated, NewNodeUpdated}.
 
 lookup_node(Node, TargetId) ->
