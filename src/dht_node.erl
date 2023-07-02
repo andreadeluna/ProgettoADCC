@@ -134,7 +134,7 @@ update_active_node(Node, NodeId) ->
 
 send_message(Node, Message, TargetId) ->
   {_, _, NodePort} = dht_routing_table:get_node_info(Node#node.routing_table),
-  TargetNodeInfo = dht_routing_table:get_node_info_by_id(Node#node.routing_table, TargetId#node.node_id),
+  TargetNodeInfo = dht_routing_table:get_node_info_by_id(Node#node.routing_table, TargetId),
   {_, Socket} = Node#node.socket,
   io:format("Socket message: ~p~n", [Socket]),
   io:format("TargetNodeInfo: ~p~n", [TargetNodeInfo]),
@@ -142,11 +142,12 @@ send_message(Node, Message, TargetId) ->
     {TargetIp, _} ->
       io:format("Port: ~p~n", [NodePort]),
       gen_udp:send(Socket, TargetIp, NodePort, term_to_binary(Message)),
-      io:format("Nodo trovato\n"),
-      io:format("Received message from ~p: ~p~n", [Node#node.node_id, Message]),
-      ok;
-    _ ->
-      io:format("Nodo non trovato") % Gestisci l'errore di nodo di destinazione non trovato come desiderato
+      io:format("Nodo trovato~n"),
+      io:format("Sent message from ~p: ~p~n", [Node#node.node_id, Message]),
+      {ok, {pong, {TargetId}}};
+    {not_found} ->
+      io:format("Nodo non trovato"), % Gestisci l'errore di nodo di destinazione non trovato come desiderato
+      {error, target_not_found}
   end.
 
 listen(Node) ->
