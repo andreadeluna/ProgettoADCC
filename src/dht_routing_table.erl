@@ -110,10 +110,22 @@ replace_element(1, NewElement, [_|T], Acc) ->
 replace_element(Index, NewElement, [H|T], Acc) ->
   replace_element(Index - 1, NewElement, T, [H|Acc]).
 
-
 get_udp_port() ->
-  {12345}.
+  {ok, Socket} = gen_udp:open(0, []),
+  {ok, Port} = inet:sockname(Socket),
+  gen_udp:close(Socket),
+  TailPort = element(2, Port),
+  io:format("Porta macchina: ~p~n", [TailPort]),
+  TailPort.
 
 get_own_ip() ->
-  {127,0,0,1}.
+  {ok, IfList} = inet:getif(),
+  {IP, _, _} = hd(IfList),
+  io:format("IP macchina: ~p~n", [IP]),
+  IP.
 
+%% get_udp_port() ->
+% {12345}.
+
+%% get_own_ip() ->
+%  {127,0,0,1}.
