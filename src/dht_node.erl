@@ -42,7 +42,7 @@ start() ->
   UpdatedNode.
 
 generate_random_id() ->
-  Bytes = crypto:strong_rand_bytes(8),
+  Bytes = crypto:strong_rand_bytes(20),
   Bytes.
 
 hash_id(Id) ->
@@ -52,13 +52,13 @@ hash_id(Id) ->
 join_network(NewNode, ExistingNode) ->
   ExistingNodeInfo = #node_info{
     id = ExistingNode#node.node_id,
-    ip = dht_routing_table:get_own_ip(),
-    port = dht_routing_table:get_udp_port()
+    ip = element(1, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id)),
+    port = element(2, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id))
   },
   NewNodeInfo = #node_info{
     id = NewNode#node.node_id,
-    ip = dht_routing_table:get_own_ip(),
-    port = dht_routing_table:get_udp_port()
+    ip = element(1, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id)),
+    port = element(2, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id))
   },
   ExistingNodeUpdated = ExistingNode#node{
     node_id = ExistingNode#node.node_id,
@@ -239,7 +239,10 @@ stop(Node) ->
   NewRoutingTable = dht_routing_table:remove_node(Node#node.node_id, Node#node.routing_table),
   NewDatastore = dht_datastore:init(),
   NewNode = Node#node{
+    node_id = Node#node.node_id,
     socket = Socket,
     routing_table = NewRoutingTable,
-    datastore = NewDatastore},
+    datastore = NewDatastore,
+    active_nodes = []
+  },
   NewNode.

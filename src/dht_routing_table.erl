@@ -36,12 +36,23 @@ remove_node(NodeId, RoutingTable) ->
 
 remove_node_from_bucket(_, []) ->
   [];
-remove_node_from_bucket(NodeId, [Bucket | Rest]) ->
-  io:format("NodeId: ~p~n", [NodeId]),
-  io:format("Bucket: ~p~n", [Bucket]),
-  io:format("Rest: ~p~n", [Rest]),
-  NewBucket = lists:filter(fun(Node) -> Node#node_info.id /= NodeId end, Bucket),
-  [NewBucket | remove_node_from_bucket(NodeId, Rest)].
+remove_node_from_bucket(Node, Bucket) ->
+  %% Rimozione del nodo dal bucket
+  io:format("Node passato: ~p~n", [Node]),
+  UpdatedBucket = lists:filter(fun(Dict) ->
+    case dict:find(Node, Dict) of
+      error ->
+        io:format("Error"),
+        true;
+      {ok, Node} ->
+        io:format("OK Node: ~p~n", [Node]),
+        false;
+      {ok, A} ->
+        io:format("Nodo: ~p~n", [A]),
+        true
+    end
+  end, Bucket),
+  UpdatedBucket.
 
 replace_node(Bucket, NodeInfo) ->
   case dict:find(NodeInfo#node_info.id, Bucket) of
@@ -65,7 +76,9 @@ find_smallest_id(Bucket) ->
   lists:min(Keys).
 
 get_node_info(Table) ->
-  {Table#dht_routing_table.node_id, self(), get_udp_port()}.
+  {Table#dht_routing_table.node_id,
+    element(1,get_node_info_by_id(Table,Table#dht_routing_table.node_id)),
+    element(2,get_node_info_by_id(Table,Table#dht_routing_table.node_id))}.
 
 get_node_info_by_id(Table, NodeId) ->
   BucketIndex = get_bucket_index(Table, NodeId),
