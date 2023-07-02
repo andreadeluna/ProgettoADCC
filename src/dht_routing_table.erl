@@ -89,12 +89,15 @@ find_closest_nodes(Table, TargetId) ->
   lists:sublist(SortedNodes, 1, 3).
 
 get_bucket_index(Table, Id) ->
+  io:format("ID1: ~p~n", [Table#dht_routing_table.node_id]),
+  io:format("ID2: ~p~n", [Id]),
   Distance = dht_utils:distance(Table#dht_routing_table.node_id, Id),
   BucketSize = 20,
   Index = 160 - trunc(math:log2(Distance + 1)),
   Index div BucketSize + 1.
 
 get_all_nodes(Table) ->
+  io:format("Table Buckets: ~p~n", [Table]),
   lists:flatten([dict:to_list(Bucket) || Bucket <- Table#dht_routing_table.buckets]).
 
 replace_element(Index, NewElement, List) ->
