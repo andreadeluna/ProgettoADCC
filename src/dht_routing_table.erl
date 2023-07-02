@@ -55,6 +55,7 @@ get_node_info(Table) ->
   {Table#dht_routing_table.node_id, self(), get_udp_port()}.
 
 get_node_info_by_id(Table, NodeId) ->
+  io:format("Node Info ID: ~p~n", [NodeId]),
   BucketIndex = get_bucket_index(Table, NodeId),
   Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
   io:format("Bucket Info: ~p~n", [Bucket]),
@@ -64,7 +65,8 @@ get_node_info_by_id(Table, NodeId) ->
       io:format("NodeInfoOK: ~p~n", [NodeInfo]),
       {NodeInfo#node_info.ip, NodeInfo#node_info.port};
     error ->
-      {get_own_ip(), get_udp_port()}
+      io:format("Error"),
+      {not_found}
   end.
 
 find_node(Table, TargetId) ->
