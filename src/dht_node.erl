@@ -78,18 +78,35 @@ lookup_node_recursive(Node, NodeInfo) ->
 
 find_node(Node, TargetId) ->
   Nodes = dht_routing_table:find_closest_nodes(Node#node.routing_table, TargetId),
-  Reply = {node_reply, Nodes},
-  send_message(Node, Reply, TargetId).
+  io:format("Nodes Rec: ~p~n", [Nodes]),
+  case Nodes of
+    [] ->
+      % Nessun nodo trovato, puoi gestire l'errore qui
+      {error, node_not_found};
+    [{_, ClosestNode} | _RestNodes] ->
+      % Prendi l'ID del nodo più vicino e usalo come destinazione
+      Reply = {node_reply, Nodes},
+      io:format("Closest ID: ~p~n", [ClosestNode#node_info.id]),
+      send_message(Node, Reply, ClosestNode#node_info.id)
+  end.
 
 find_value(Node, Key) ->
-  case dht_datastore:lookup(Node, Key) of
+  case dht_datastore:lookup(Node#node.datastore, Key) of
     {ok, Value} ->
       Reply = {value_reply, Key, Value},
-      send_message(Node, Key, Reply);
+      send_message(Node, Reply, Node#node.node_id);
     error ->
-      Nodes = dht_routing_table:find_closest_nodes(Node, Key),
-      Reply = {node_reply, Nodes},
-      send_message(Node, Key, Reply)
+      Nodes = dht_routing_table:find_closest_nodes(Node#node.routing_table, Node#node.node_id),
+      case Nodes of
+        [] ->
+          % Nessun nodo trovato, puoi gestire l'errore qui
+          {error, node_not_found};
+        [{_, ClosestNode} | _RestNodes] ->
+          % Prendi l'ID del nodo più vicino e usalo come destinazione
+          Reply = {node_reply, Nodes},
+          io:format("Closest ID: ~p~n", [ClosestNode#node_info.id]),
+          send_message(Node, Reply, ClosestNode#node_info.id)
+      end
   end.
 
 store(Node, Key, Value) ->
