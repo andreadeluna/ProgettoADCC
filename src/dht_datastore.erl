@@ -1,7 +1,7 @@
 %% Modulo dht_datastore
 -module(dht_datastore).
 
-% Inclusione del record
+% Inclusione della definizione del record
 -include("dht_datastore.hrl").
 
 % Esportazione funzioni

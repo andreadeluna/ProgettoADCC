@@ -17,7 +17,7 @@
 -define(BUCKET_SIZE, 20).
 
 init(NodeId) ->
-  Buckets = lists:foldl(fun(_, Acc) -> [dict:new() | Acc] end, [], lists:seq(1, 160 div ?BUCKET_SIZE)),
+  Buckets = lists:foldl(fun(_, Acc) -> [dict:new() | Acc] end, [], lists:seq(1, 20 div ?BUCKET_SIZE)),
   #dht_routing_table{
     node_id = NodeId,
     buckets = Buckets
@@ -99,7 +99,7 @@ find_closest_nodes(Table, TargetId) ->
 get_bucket_index(Table, Id) ->
   Distance = dht_utils:distance(Table#dht_routing_table.node_id, Id),
   BucketSize = 20,
-  Index = 160 - trunc(math:log2(Distance + 1)),
+  Index = 20 - trunc(math:log2(Distance + 1)),
   Index div BucketSize + 1.
 
 get_all_nodes(Table) ->
