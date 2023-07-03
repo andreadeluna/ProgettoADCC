@@ -93,7 +93,7 @@ Per cercare un valore tramite chiave all'interno di un nodo sarà sufficiente es
 dht_node:find_value(NewConnected, "chiave").
 ```
 
-che restituirà il relativo valore,se trovato all'interno del datastore del nodo indicato.
+che restituirà il relativo valore, se trovato all'interno del datastore del nodo indicato.
 Nel caso in cui il valore non venga trovato verrà restituito un messaggio indicante i tre nodi più vicini al
 nodo indicato al momento della chiamata della funzione, in modo da poter cercare anche in essi il valore desiderato.
 
@@ -119,3 +119,14 @@ dht_node:lookup_node(NewConnected, Id).
 che restituirà, se il nodo è stato trovato, un messaggio di pong da parte di esso, contenente le relative informazioni del nodo.
 Se invece il nodo non è stato trovato, verrà ricevuto invece un messaggio di pong da parte del nodo più vicino all'ID indicato
 in fase di chiamata della funzione.
+
+#### Stop
+Per stoppare l'esecuzione di un nodo è sufficiente eseguire il comando 
+
+```
+StopNewConnected = dht_node:stop(NewConnected).
+```
+
+che ne fermerà l'esecuzione e assegnerà il nuovo valore del nodo ad una nuova variabile, 
+contenente i parametri aggiornati, quali la routing table senza nodi connessi, la lista vuota di nodi attivi 
+e una socket indefinita.
