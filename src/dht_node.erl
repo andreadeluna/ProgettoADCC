@@ -239,10 +239,10 @@ stop(Node) ->
   NewRoutingTable = dht_routing_table:remove_node(Node#node.node_id, Node#node.routing_table),
   NewDatastore = dht_datastore:init(),
   NewNode = Node#node{
-    node_id = Node#node.node_id,
-    socket = Socket,
+    socket = undefined,
     routing_table = NewRoutingTable,
     datastore = NewDatastore,
     active_nodes = []
   },
+  io:format("~nNodo rimosso con successo~n"),
   NewNode.

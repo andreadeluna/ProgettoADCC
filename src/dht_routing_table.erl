@@ -36,22 +36,16 @@ remove_node(NodeId, RoutingTable) ->
 
 remove_node_from_bucket(_, []) ->
   [];
-remove_node_from_bucket(Node, Bucket) ->
-  %% Rimozione del nodo dal bucket
-  io:format("Node passato: ~p~n", [Node]),
-  UpdatedBucket = lists:filter(fun(Dict) ->
-    case dict:find(Node, Dict) of
-      error ->
-        io:format("Error"),
-        true;
-      {ok, Node} ->
-        io:format("OK Node: ~p~n", [Node]),
-        false;
-      {ok, A} ->
-        io:format("Nodo: ~p~n", [A]),
-        true
-    end
-  end, Bucket),
+remove_node_from_bucket(NodeId, Bucket) ->
+  UpdatedBucket = lists:filter(
+    fun(Dict) ->
+      case dict:find(NodeId, Dict) of
+        error -> true;
+        {ok, Node} when Node#node_info.id == NodeId ->
+          false;
+        _ -> true
+      end
+    end, Bucket),
   UpdatedBucket.
 
 replace_node(Bucket, NodeInfo) ->
