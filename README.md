@@ -9,6 +9,8 @@ Secondo appello, Sessione Estiva 2022/2023
 ### Studente:
 * [Andrea De Luna](https://github.com/andreadeluna), **Matricola :** 313076
 
+* [Veronica Michelini](https://github.com/VeronicaMichelini), **Matricola :** 317197
+
 -----------------------------------------------------
 ## Obiettivo
 Il progetto consiste nell'implementazione di una Distributed Hash Table (DHT), il cui funzionamento si basa sul protocollo Kademlia.
