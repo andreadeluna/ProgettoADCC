@@ -12,10 +12,10 @@ get_udp_port/0]
 
 % Esportazione funzioni
 -export([
-  create_nodes/1,
-  connect_nodes/1,
   start/0,
   join_network/2,
+  create_nodes/1,
+  connect_nodes/1,
   stop/1,
   ping/2,
   store/3,
@@ -26,30 +26,6 @@ get_udp_port/0]
   lookup_node/2,
   print_node/1
 ]).
-
-%% Creazione automatizzata di N nodi
-create_nodes(N) ->
-  create_nodes(N, []).
-
-%% Creazione ciclica nodi
-create_nodes(0, Nodes) ->
-  lists:reverse(Nodes);
-create_nodes(N, Nodes) ->
-  Node = start(),
-  create_nodes(N - 1, [Node | Nodes]).
-
-%% Connessione automatizzata di tutti i nodi creati
-connect_nodes([]) ->
-  [];
-connect_nodes([Node1 | RestNodes]) ->
-  connect_nodes(RestNodes, Node1, [Node1]).
-
-%% Connessione ciclica nodi
-connect_nodes([], _, ConnectedNodes) ->
-  lists:reverse(ConnectedNodes);
-connect_nodes([Node2 | RestNodes], ExistingNode, ConnectedNodes) ->
-  {_, ConnectedNode} = join_network(ExistingNode, Node2),
-  connect_nodes(RestNodes, ConnectedNode, [ConnectedNode | ConnectedNodes]).
 
 %% Avvio e creazione del nodo
 start() ->
@@ -115,6 +91,30 @@ join_network(NewNode, ExistingNode) ->
     active_nodes = [ExistingNodeInfo | NewNode#node.active_nodes]
   },
   {ExistingNodeUpdated, NewNodeUpdated}.
+
+%% Creazione automatizzata di N nodi
+create_nodes(N) ->
+  create_nodes(N, []).
+
+%% Creazione ciclica nodi
+create_nodes(0, Nodes) ->
+  lists:reverse(Nodes);
+create_nodes(N, Nodes) ->
+  Node = start(),
+  create_nodes(N - 1, [Node | Nodes]).
+
+%% Connessione automatizzata di tutti i nodi creati
+connect_nodes([]) ->
+  [];
+connect_nodes([Node1 | RestNodes]) ->
+  connect_nodes(RestNodes, Node1, [Node1]).
+
+%% Connessione ciclica nodi
+connect_nodes([], _, ConnectedNodes) ->
+  lists:reverse(ConnectedNodes);
+connect_nodes([Node2 | RestNodes], ExistingNode, ConnectedNodes) ->
+  {_, ConnectedNode} = join_network(ExistingNode, Node2),
+  connect_nodes(RestNodes, ConnectedNode, [ConnectedNode | ConnectedNodes]).
 
 %% Ricerca di un nodo all'interno della rete:
 %% se non viene trovato viene mostrato il nodo più vicino all'ID cercato
