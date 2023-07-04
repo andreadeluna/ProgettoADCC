@@ -16,7 +16,7 @@ Secondo appello, Sessione Estiva 2022/2023
 Il progetto consiste nell'implementazione di una Distributed Hash Table (DHT), il cui funzionamento si basa sul protocollo Kademlia.
 
 
-## Preparazione ambiente sviluppo
+## Preparazione ambiente
 
 #### Primo avvio
 Per procedere con il primo avvio, è necessario posizionarsi all'interno della cartella src, contenente i moduli atti al funzionamento del progetto.
@@ -131,6 +131,14 @@ dht_node:send_message(NewConnected, Message, Id).
 
 che restituirà, se il nodo è stato trovato, un messaggio di pong con conseguente visualizzazione del messaggio inviato e del destinatario. 
 Nel caso in cui il nodo non venga trovato, verrà visualizzato un messaggio di errore.
+
+#### Print node
+
+Per stampare le informazioni relative ad un nodo è sufficiente eseguire il comando
+
+```
+dht_node:print_node(NewConnected).
+```
 
 #### Stop
 Per stoppare l'esecuzione di un nodo è sufficiente eseguire il comando 
