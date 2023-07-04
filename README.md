@@ -120,6 +120,16 @@ che restituirà, se il nodo è stato trovato, un messaggio di pong da parte di e
 Se invece il nodo non è stato trovato, verrà ricevuto invece un messaggio di pong da parte del nodo più vicino all'ID indicato
 in fase di chiamata della funzione.
 
+#### Send message
+Per inviare un messaggio da un nodo ad un altro all'interno della rete è sufficiente eseguire il comando
+
+```
+dht_node:send_message(NewConnected, Message, Id).
+```
+
+che restituirà, se il nodo è stato trovato, un messaggio di pong con conseguente visualizzazione del messaggio inviato e del destinatario. 
+Nel caso in cui il nodo non venga trovato, verrà visualizzato un messaggio di errore.
+
 #### Stop
 Per stoppare l'esecuzione di un nodo è sufficiente eseguire il comando 
 
