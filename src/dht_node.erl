@@ -13,6 +13,9 @@ get_udp_port/0]
 % Esportazione funzioni
 -export([
   start/0,
+  init/0,
+  start_handler/1,
+  get_node/1,
   join_network/2,
   create_nodes/1,
   connect_nodes/1,
@@ -31,36 +34,35 @@ get_udp_port/0]
 start() ->
   Id = generate_random_id(),
   HashedId = hash_id(Id),
+  Pid = spawn_link(node(), fun() -> init() end),
   RoutingTable = dht_routing_table:init(HashedId),
   Datastore = dht_datastore:init(),
-  Socket = gen_udp:open(0, [{active, true}]),
   Node = #node{
     node_id = HashedId,
     routing_table = RoutingTable,
     datastore = Datastore,
-    socket = Socket,
+    pid = Pid,
     active_nodes = []
   },
   NodeInfo = #node_info{
     id = HashedId,
-    ip = dht_routing_table:get_own_ip(),
-    port = dht_routing_table:get_udp_port()
+    pid = Pid
   },
   UpdatedRoutingTable = dht_routing_table:add_node(RoutingTable, NodeInfo),
-  UpdatedNode = Node#node{routing_table = UpdatedRoutingTable},
-  spawn(fun() -> listen(UpdatedNode) end),
+  UpdatedNode = Node#node{
+    routing_table = UpdatedRoutingTable,
+    pid = Pid
+  },
+  spawn_link(node(), fun() -> listen(UpdatedNode) end),
   io:format("~n~nNodo creato con successo ~n~n"),
+  print_node(UpdatedNode),
   UpdatedNode.
 
-%% Generazione ID in modo casuale
-generate_random_id() ->
-  Bytes = crypto:strong_rand_bytes(20),
-  Bytes.
+init() ->
+  register(node, self()).
 
-%% Hash dell'ID generato casualmente
-hash_id(Id) ->
-  Hash = crypto:hash(sha, Id),
-  erlang:phash2(Hash).
+get_node(Node) ->
+  Node.
 
 %% Connessione di due nodi alla stessa rete
 join_network(NewNode, ExistingNode) ->
