@@ -64,6 +64,16 @@ init() ->
 get_node(Node) ->
   Node.
 
+%% Generazione ID in modo casuale
+generate_random_id() ->
+  Bytes = crypto:strong_rand_bytes(20),
+  Bytes.
+
+%% Hash dell'ID generato casualmente
+hash_id(Id) ->
+  Hash = crypto:hash(sha, Id),
+  erlang:phash2(Hash).
+
 %% Connessione di due nodi alla stessa rete
 join_network(NewNode, ExistingNode) ->
   ExistingNodeInfo = #node_info{
