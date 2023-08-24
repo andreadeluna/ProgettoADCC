@@ -71,8 +71,8 @@ join_network(NewNode, ExistingNode) ->
   },
   NewNodeInfo = #node_info{
     id = NewNode#node.node_id,
-    ip = element(1, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id)),
-    port = element(2, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id))
+    ip = element(1, dht_routing_table:get_node_info_by_id(NewNode#node.routing_table, NewNode#node.node_id)),
+    port = element(2, dht_routing_table:get_node_info_by_id(NewNode#node.routing_table, NewNode#node.node_id))
   },
 
   %% Aggiornamento dei parametri dei nodi e popolamento della routing table e dei nodi attivi
