@@ -4,15 +4,12 @@
 % Inclusione della definizione dei record
 -include("dht_node.hrl").
 
-% Importazione delle funzioni di supporto da altri moduli
--import(dht_routing_table,
-        [get_own_ip/0,
-        get_udp_port/0]
-).
-
 % Esportazione funzioni
 -export([
   start/0,
+  init/0,
+  start_handler/1,
+  get_node/1,
   join_network/2,
   create_nodes/1,
   connect_nodes/1,
@@ -22,7 +19,6 @@
   find_node/2,
   find_value/2,
   send_message/3,
-  handle_message/2,
   lookup_node/2,
   print_node/1
 ]).
@@ -31,26 +27,84 @@
 start() ->
   Id = generate_random_id(),
   HashedId = hash_id(Id),
+  Pid = spawn_link(node(), fun() -> init() end),
   RoutingTable = dht_routing_table:init(HashedId),
   Datastore = dht_datastore:init(),
-  Socket = gen_udp:open(0, [{active, true}]),
   Node = #node{
     node_id = HashedId,
     routing_table = RoutingTable,
     datastore = Datastore,
-    socket = Socket,
+    pid = Pid,
     active_nodes = []
   },
   NodeInfo = #node_info{
     id = HashedId,
-    ip = dht_routing_table:get_own_ip(),
-    port = dht_routing_table:get_udp_port()
+    pid = Pid
   },
   UpdatedRoutingTable = dht_routing_table:add_node(RoutingTable, NodeInfo),
-  UpdatedNode = Node#node{routing_table = UpdatedRoutingTable},
-  spawn(fun() -> listen(UpdatedNode) end),
+  UpdatedNode = Node#node{
+    routing_table = UpdatedRoutingTable,
+    pid = Pid
+  },
   io:format("~n~nNodo creato con successo ~n~n"),
+  print_node(UpdatedNode),
   UpdatedNode.
+
+%% Inizializzazione del nodo
+init() ->
+  register(node, self()).
+
+%% Avvio del gestore del nodo
+start_handler(Node) ->
+  spawn_link(node(), fun() -> handler_loop(Node) end).
+
+%% Funzione di ascolto di un nodo durante il suo funzionamento
+%% e di esecuzione operazioni tramite message passing
+handler_loop(Node) ->
+  receive
+    {get_node_info, Pid} ->
+      NodeInfo = get_node(Node),
+      Pid ! {node_info_response, NodeInfo},
+      handler_loop(Node);
+    {ping, Target, Pid} ->
+      Response = ping(Node, Target),
+      Pid ! {ping_response, Response},
+      handler_loop(Node);
+    {store, Key, Value, Pid} ->
+      Response = store(Node, Key, Value),
+      Pid ! {store_response, Response},
+      handler_loop(Node);
+    {find_value, Key, Pid} ->
+      Response = find_value(Node, Key),
+      Pid ! {find_value_response, Response},
+      handler_loop(Node);
+    {find_node, Target, Pid} ->
+      Response = find_node(Node, Target),
+      Pid ! {find_node_response, Response},
+      handler_loop(Node);
+    {lookup, Target, Pid} ->
+      Response = lookup_node(Node, Target),
+      Pid ! {lookup_response, Response},
+      handler_loop(Node);
+    {send_message, Message, Target, Pid} ->
+      Response = send_message(Node, Message, Target),
+      Pid ! {send_message_response, Response},
+      handler_loop(Node);
+    {stop, Pid} ->
+      Response = stop(Node),
+      Pid ! {stop_response, Response},
+      handler_loop(Node);
+  %% Invio valore nodo ad una shell remota
+    Msg ->
+      Prova = Msg,
+      io:format("Ricevuto: ~p~n", [Prova]),
+      Msg,
+      handler_loop(Node)
+  end.
+
+%% Restituzione del valore del nodo
+get_node(Node) ->
+  Node.
 
 %% Generazione ID in modo casuale
 generate_random_id() ->
@@ -66,13 +120,11 @@ hash_id(Id) ->
 join_network(NewNode, ExistingNode) ->
   ExistingNodeInfo = #node_info{
     id = ExistingNode#node.node_id,
-    ip = element(1, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id)),
-    port = element(2, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id))
+    pid = element(1, dht_routing_table:get_node_info_by_id(ExistingNode#node.routing_table, ExistingNode#node.node_id))
   },
   NewNodeInfo = #node_info{
     id = NewNode#node.node_id,
-    ip = element(1, dht_routing_table:get_node_info_by_id(NewNode#node.routing_table, NewNode#node.node_id)),
-    port = element(2, dht_routing_table:get_node_info_by_id(NewNode#node.routing_table, NewNode#node.node_id))
+    pid = element(1, dht_routing_table:get_node_info_by_id(NewNode#node.routing_table, NewNode#node.node_id))
   },
 
   %% Aggiornamento dei parametri dei nodi e popolamento della routing table e dei nodi attivi
@@ -80,16 +132,16 @@ join_network(NewNode, ExistingNode) ->
     node_id = ExistingNode#node.node_id,
     routing_table = dht_routing_table:add_node(ExistingNode#node.routing_table, NewNodeInfo),
     datastore = ExistingNode#node.datastore,
-    socket = ExistingNode#node.socket,
+    pid = ExistingNode#node.pid,
     active_nodes = [NewNodeInfo | ExistingNode#node.active_nodes]
   },
   NewNodeUpdated = NewNode#node{
     node_id = NewNode#node.node_id,
     routing_table = dht_routing_table:add_node(NewNode#node.routing_table, ExistingNodeInfo),
     datastore = NewNode#node.datastore,
-    socket = NewNode#node.socket,
+    pid = NewNode#node.pid,
     active_nodes = [ExistingNodeInfo | NewNode#node.active_nodes]
-    },
+  },
   {ExistingNodeUpdated, NewNodeUpdated}.
 
 %% Creazione automatizzata di N nodi
@@ -197,7 +249,7 @@ store(Node, Key, Value) ->
     node_id = Node#node.node_id,
     routing_table = Node#node.routing_table,
     datastore = NewDatastore,
-    socket = Node#node.socket,
+    pid = Node#node.pid,
     active_nodes = Node#node.active_nodes
   },
   NewNode.
@@ -218,66 +270,21 @@ update_active_node(Node, NodeId) ->
 
 %% Invio di un messaggio ad un nodo
 send_message(Node, Message, TargetId) ->
-  {_, _, NodePort} = dht_routing_table:get_node_info(Node#node.routing_table),
   TargetNodeInfo = dht_routing_table:get_node_info_by_id(Node#node.routing_table, TargetId),
-  {_, Socket} = Node#node.socket,
   case TargetNodeInfo of
-    %% Se il nodo viene trovato
-    {TargetIp, _} ->
-      %% Riceve il messaggio e risponde con un messaggio di pong
-      gen_udp:send(Socket, TargetIp, NodePort, term_to_binary(Message)),
-      io:format("~nNodo trovato~n"),
-      io:format("~nMessaggio ricevuto da ~p: ~p~n", [Node#node.node_id, Message]),
-      io:format("~nRisposta: ~n"),
-      {ok, {pong, {TargetId}}};
     %% Se il nodo non viene trovato
     {not_found} ->
       %% Viene segnalato l'errore
       io:format("~nNodo non trovato~n"), % Gestisci l'errore di nodo di destinazione non trovato come desiderato
-      {error, target_not_found}
+      {error, target_not_found};
+    %% Se il nodo viene trovato
+    {TargetPid} ->
+      %% Riceve il messaggio e risponde con un messaggio di pong
+      io:format("~nNodo trovato~n"),
+      io:format("~nMessaggio ricevuto da ~p con PID ~p: ~p~n", [Node#node.node_id, TargetPid, Message]),
+      io:format("~nRisposta: ~n"),
+      {ok, {pong, {TargetId}}}
   end.
-
-%% Funzione di ascolto di un nodo durante il suo funzionamento
-listen(Node) ->
-  receive
-    {udp, _, _, _, BinMsg} ->
-      Message = binary_to_term(BinMsg),
-      handle_message(Node, Message)
-  end,
-  listen(Node).
-
-%% Gestione dei messaggi di ping
-handle_message(Node, {ping, SenderId}) ->
-  Reply = {pong, {Node#node.node_id}},
-  update_active_node(Node, SenderId),
-  Reply;
-
-%% Gestione dei messaggi di store
-handle_message(Node, {store, Key, Value}) ->
-  dht_datastore:store(Node, Key, Value);
-
-%% Gestione dei messaggi di ricerca di un nodo
-handle_message(Node, {find_node, TargetId}) ->
-  Nodes = dht_routing_table:find_closest_nodes(Node, TargetId),
-  Reply = {node_reply, Nodes},
-  send_message(Node, Reply, TargetId);
-
-%% Gestione dei messaggi di ricerca di un valore
-handle_message(Node, {find_value, Key}) ->
-  case dht_datastore:lookup(Node, Key) of
-    {ok, Value} ->
-      Reply = {value_reply, Key, Value},
-      send_message(Node, Reply, Key);
-    error ->
-      Nodes = dht_routing_table:find_closest_nodes(Node, Key),
-      Reply = {node_reply, Nodes},
-      send_message(Node, Reply, Key)
-  end;
-
-%% Gestione dei messaggi di pong
-handle_message(Node, {pong, TargetId}) ->
-  update_active_node(Node, TargetId),
-  ok.
 
 %% Stampa delle informazioni di un nodo
 print_node(Node) ->
@@ -285,7 +292,7 @@ print_node(Node) ->
   io:format("ID Nodo: ~p~n", [Node#node.node_id]),
   io:format("Info Nodo: ~p~n", [dht_routing_table:get_node_info(Node#node.routing_table)]),
   io:format("Routing Table: ~p~n", [dht_routing_table:get_all_nodes(Node#node.routing_table)]),
-  io:format("Socket Nodo: ~p~n", [Node#node.socket]),
+  io:format("PID Nodo: ~p~n", [Node#node.pid]),
   io:format("Datastore: ~p~n", [Node#node.datastore]),
   io:format("Nodi attivi: ~p~n", [Node#node.active_nodes]).
 
@@ -311,16 +318,14 @@ ping(Node, TargetId) ->
 
 %% Stop di un nodo in esecuzione
 stop(Node) ->
-  {_, Socket} = Node#node.socket,
-  %% Chiusura socket
-  gen_udp:close(Socket),
+  exit(Node#node.pid, normal),
   %% Rimozione nodi collegati dalla routing table
   NewRoutingTable = dht_routing_table:remove_node(Node#node.node_id, Node#node.routing_table),
   %% Eliminazione valori dal datastore
   NewDatastore = dht_datastore:init(),
   %% Aggiornamento del record
   NewNode = Node#node{
-    socket = undefined,
+    pid = undefined,
     routing_table = NewRoutingTable,
     datastore = NewDatastore,
     active_nodes = []
