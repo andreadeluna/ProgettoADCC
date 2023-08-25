@@ -13,9 +13,7 @@
   get_all_nodes/1,
   find_node/2,
   find_closest_nodes/2,
-  add_node/2,
-  get_own_ip/0,
-  get_udp_port/0
+  add_node/2
 ]).
 
 % Definizione dimensione bucket della routing table
@@ -62,15 +60,19 @@ remove_node_from_bucket(NodeId, Bucket) ->
 replace_node(Bucket, NodeInfo) ->
   case dict:find(NodeInfo#node_info.id, Bucket) of
     {ok, _} ->
+      io:format("~nBucket ok~n"),
       Bucket;
     error ->
       case dict:size(Bucket) >= ?BUCKET_SIZE of
         true ->
+          io:format("~nBucket pieno~n"),
           % Se il bucket è pieno, il nodo viene sostituito con lo stesso ID
           SmallestId = find_smallest_id(Bucket),
+          io:format("~nSmallestID: ~p~n", [SmallestId]),
           UpdatedBucket = dict:erase(SmallestId, Bucket),
           dict:store(NodeInfo#node_info.id, NodeInfo, UpdatedBucket);
         false ->
+          io:format("~nBucket vuoto~n"),
           % Se il bucket non è pieno, il nodo viene aggiunto
           dict:store(NodeInfo#node_info.id, NodeInfo, Bucket)
       end
@@ -84,8 +86,7 @@ find_smallest_id(Bucket) ->
 %% Ricerca delle informazioni di un nodo
 get_node_info(Table) ->
   {Table#dht_routing_table.node_id,
-    element(1,get_node_info_by_id(Table,Table#dht_routing_table.node_id)),
-    element(2,get_node_info_by_id(Table,Table#dht_routing_table.node_id))}.
+    element(1,get_node_info_by_id(Table,Table#dht_routing_table.node_id))}.
 
 %% Ricerca delle informazioni di un nodo tramite ID
 get_node_info_by_id(Table, NodeId) ->
@@ -94,7 +95,7 @@ get_node_info_by_id(Table, NodeId) ->
   case dict:find(NodeId, Bucket) of
     {ok, NodeInfo} ->
       %% Se il nodo viene trovato viene restituito l'IP e la Porta
-      {NodeInfo#node_info.ip, NodeInfo#node_info.port};
+      {NodeInfo#node_info.pid};
     error ->
       %% Se il nodo non viene trovato viene segnalato un errore
       {not_found}
@@ -136,17 +137,3 @@ replace_element(1, NewElement, [_|T], Acc) ->
   lists:reverse([NewElement|T] ++ Acc);
 replace_element(Index, NewElement, [H|T], Acc) ->
   replace_element(Index - 1, NewElement, T, [H|Acc]).
-
-%% Assegnazione porta UDP ad un nodo in fase di creazione
-get_udp_port() ->
-  {ok, Socket} = gen_udp:open(0, []),
-  {ok, Port} = inet:sockname(Socket),
-  gen_udp:close(Socket),
-  TailPort = element(2, Port),
-  TailPort.
-
-%% Assegnazione IP ad un nodo in fase di creazione
-get_own_ip() ->
-  {ok, IfList} = inet:getif(),
-  {IP, _, _} = hd(IfList),
-  IP.

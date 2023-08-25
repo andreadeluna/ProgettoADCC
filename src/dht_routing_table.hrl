@@ -7,6 +7,5 @@
 %% Definizione record node_info
 -record(node_info,
 {id,
-  ip,
-  port}
+  pid}
 ).

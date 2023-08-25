@@ -1,4 +1,4 @@
-%% Modulo dht_datastore
+%% Modulo dht_utils
 -module(dht_utils).
 
 % Esportazione funzioni
