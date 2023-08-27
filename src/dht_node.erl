@@ -97,7 +97,7 @@ handler_loop(Node) ->
   %% Invio valore nodo ad una shell remota
     Msg ->
       Prova = Msg,
-      io:format("Ricevuto: ~p~n", [Prova]),
+      io:format("~nNODO REMOTO RICEVUTO: ~n~p~n", [Prova]),
       Msg,
       handler_loop(Node)
   end.
