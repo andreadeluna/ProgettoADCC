@@ -60,19 +60,15 @@ remove_node_from_bucket(NodeId, Bucket) ->
 replace_node(Bucket, NodeInfo) ->
   case dict:find(NodeInfo#node_info.id, Bucket) of
     {ok, _} ->
-      io:format("~nBucket ok~n"),
       Bucket;
     error ->
       case dict:size(Bucket) >= ?BUCKET_SIZE of
         true ->
-          io:format("~nBucket pieno~n"),
           % Se il bucket è pieno, il nodo viene sostituito con lo stesso ID
           SmallestId = find_smallest_id(Bucket),
-          io:format("~nSmallestID: ~p~n", [SmallestId]),
           UpdatedBucket = dict:erase(SmallestId, Bucket),
           dict:store(NodeInfo#node_info.id, NodeInfo, UpdatedBucket);
         false ->
-          io:format("~nBucket vuoto~n"),
           % Se il bucket non è pieno, il nodo viene aggiunto
           dict:store(NodeInfo#node_info.id, NodeInfo, Bucket)
       end
@@ -94,7 +90,7 @@ get_node_info_by_id(Table, NodeId) ->
   Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
   case dict:find(NodeId, Bucket) of
     {ok, NodeInfo} ->
-      %% Se il nodo viene trovato viene restituito l'IP e la Porta
+      %% Se il nodo viene trovato viene restituito il pid
       {NodeInfo#node_info.pid};
     error ->
       %% Se il nodo non viene trovato viene segnalato un errore

@@ -280,8 +280,8 @@ send_message(Node, Message, TargetId) ->
     %% Se il nodo viene trovato
     {TargetPid} ->
       %% Riceve il messaggio e risponde con un messaggio di pong
-      io:format("~nNodo trovato~n"),
-      io:format("~nMessaggio ricevuto da ~p con PID ~p: ~p~n", [Node#node.node_id, TargetPid, Message]),
+      io:format("~nNodo con ID ~p e PID ~p trovato~n", [TargetId, TargetPid]),
+      io:format("~nMessaggio ricevuto da ~p: ~p~n", [Node#node.node_id, Message]),
       io:format("~nRisposta: ~n"),
       {ok, {pong, {TargetId}}}
   end.
