@@ -29,7 +29,7 @@ erlc *.erl
 Oppure, allo stesso modo, è possibile aprire la shell di Erlang con il comando
 
 ```
-erl
+erl -sname nome_host@localhost
 ```
 
 e in seguito compilare i moduli al proprio interno uno alla volta, con i comandi
@@ -40,7 +40,7 @@ c(dht_datastore),
 c(dht_utils),
 c(dht_node).
 ```
-## Funzionamento
+## Funzionamento classico
 #### Creazione nodi
 È necessario, successivamente, avviare i nodi e connetterli alla rete. È possibile effettuare
 l'operazione in modo manuale con i comandi:
@@ -129,7 +129,7 @@ Per inviare un messaggio da un nodo ad un altro all'interno della rete è suffic
 dht_node:send_message(NewConnected, Message, Id).
 ```
 
-che restituirà, se il nodo è stato trovato, un messaggio di pong con conseguente visualizzazione del messaggio inviato e del destinatario. 
+che restituirà, se il nodo è stato trovato, un messaggio di pong con conseguente visualizzazione del messaggio inviato e del destinatario.
 Nel caso in cui il nodo non venga trovato, verrà visualizzato un messaggio di errore.
 
 #### Print node
@@ -141,12 +141,121 @@ dht_node:print_node(NewConnected).
 ```
 
 #### Stop
-Per stoppare l'esecuzione di un nodo è sufficiente eseguire il comando 
+Per stoppare l'esecuzione di un nodo è sufficiente eseguire il comando
 
 ```
 StopNewConnected = dht_node:stop(NewConnected).
 ```
 
-che ne fermerà l'esecuzione e assegnerà il nuovo valore del nodo ad una nuova variabile, 
-contenente i parametri aggiornati, quali la routing table senza nodi connessi, la lista vuota di nodi attivi 
+che ne fermerà l'esecuzione e assegnerà il nuovo valore del nodo ad una nuova variabile,
+contenente i parametri aggiornati, quali la routing table senza nodi connessi, la lista vuota di nodi attivi
 e una socket indefinita.
+
+
+## Funzionamento con Message Passing
+
+Il funzionamento del programma tramite message passing è analogo a quello illustrato nella sezione precedente.
+Tuttavia, è necessario eseguire alcuni passaggi aggiuntivi. A seguito dell'esecuzione sarà
+possibile visionare la response del messaggio inviato tramite il comando flush().
+
+#### Attivazione gestore nodo
+
+A seguito della creazione del nodo, sarà necessario attivare un gestore, che permetterà di gestirne i relativi
+messaggi.
+
+```
+Pid = dht_node:start_handler(Connected).
+```
+
+#### Visualizzazione dati nodo
+
+Per visualizzare i dati contenuti all'interno di un nodo è sufficiente eseguire il comando
+
+```
+Pid ! {get_node_info, self()}.
+```
+
+#### Ping
+
+Per effettuare l'operazione di ping è sufficiente eseguire il comando
+
+```
+Pid ! {ping, Id, self()}.
+```
+
+#### Store
+
+Per effettuare l'operazione di store è sufficiente eseguire il comando
+
+```
+Pid ! {store, Key, Value, self()}.
+```
+
+#### Find value
+
+Per effettuare l'operazione di find value è sufficiente eseguire il comando
+
+```
+Pid ! {find_value, Key, self()}.
+```
+
+#### Find node
+
+Per effettuare l'operazione di find node è sufficiente eseguire il comando
+
+```
+Pid ! {find_node, Id, self()}.
+```
+
+#### Lookup
+
+Per effettuare l'operazione di lookup è sufficiente eseguire il comando
+
+```
+Pid ! {lookup, Id, self()}.
+```
+
+#### Send message
+
+Per effettuare l'operazione di send message è sufficiente eseguire il comando
+
+```
+Pid ! {send_message, Message, Id, self()}.
+```
+
+#### Stop
+
+Per effettuare l'operazione di stop è sufficiente eseguire il comando
+
+```
+Pid ! {stop, self()}.
+```
+
+#### Invio nodo a shell remota
+
+Per effettuare inviare il valore di un nodo ad una shell remota è necessario, per prima cosa,
+connettere le shell con il comando
+
+```
+net_adm:ping(nome_host_remoto@localhost).
+```
+
+In seguito è necessario registrare il processo collegato al gestore del nodo in ascolto
+
+```
+register(my_node, Pid).
+```
+
+Infine, per inviare il valore, è sufficiente eseguire il comando
+
+```
+{my_node, 'nome_host_remoto@localhost'} ! Node.
+```
+
+#### Esecuzione comandi remota
+
+Per eseguire dei comandi remoti da una shell all'interno di una seconda shell, è possibile utilizzare il comando
+
+```
+rpc:call('nome_host_remoto@localhost', nome_modulo, funzione, [parametri]).
+```
