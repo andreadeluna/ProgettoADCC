@@ -90,7 +90,7 @@ get_node_info_by_id(Table, NodeId) ->
   Bucket = lists:nth(BucketIndex, Table#dht_routing_table.buckets),
   case dict:find(NodeId, Bucket) of
     {ok, NodeInfo} ->
-      %% Se il nodo viene trovato viene restituito l'IP e la Porta
+      %% Se il nodo viene trovato viene restituito il pid
       {NodeInfo#node_info.pid};
     error ->
       %% Se il nodo non viene trovato viene segnalato un errore

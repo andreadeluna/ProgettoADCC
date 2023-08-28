@@ -1,11 +1,11 @@
 %% Definizione record dht_routing_table
 -record(dht_routing_table,
-{node_id,
-  buckets}
+        {node_id,
+         buckets}
 ).
 
 %% Definizione record node_info
 -record(node_info,
-{id,
-  pid}
+        {id,
+         pid}
 ).
